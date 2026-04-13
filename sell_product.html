@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sell Product - GoTech CRM</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);min-height:100vh;}
+a{text-decoration:none;color:white;}
+.small{font-size:13px;}
+
+/* ====== HEADER ====== */
+header{background:linear-gradient(135deg,#ffffff 0%,#f8f9fa 100%);border-bottom:3px solid #0b63ce;box-shadow:0 4px 12px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:space-between;padding:15px 30px;flex-wrap:wrap;position:sticky;top:0;z-index:999;animation:slideDown 0.5s ease-out;}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.header-left img{width:80px;height:80px;border-radius:50%;box-shadow:0 4px 8px rgba(11,99,206,0.3);transition:transform 0.3s;}
+.header-left img:hover{transform:scale(1.1) rotate(5deg);}
+.header-center{text-align:center;flex:1;}
+.header-center h1{color:#d41f2d;font-size:32px;font-weight:800;text-shadow:2px 2px 4px rgba(0,0,0,0.1);margin-bottom:8px;}
+.header-center p{font-size:14px;color:#555;line-height:1.6;}
+.header-right img{width:65px;height:65px;border-radius:50%;border:3px solid #0b63ce;box-shadow:0 4px 8px rgba(11,99,206,0.3);transition:all 0.3s;}
+.header-right img:hover{transform:scale(1.1);border-color:#d41f2d;}
+.lang-toggle{position:absolute;top:15px;right:20px;display:flex;background:linear-gradient(90deg,#0b63ce,#2d66c3);border-radius:25px;overflow:hidden;box-shadow:0 4px 8px rgba(0,0,0,0.2);}
+.lang-toggle button{border:none;background:none;color:white;padding:8px 16px;cursor:pointer;font-weight:600;transition:all 0.3s;}
+.lang-toggle button:hover{background:rgba(255,255,255,0.1);}
+.lang-toggle button.active{background:#003b82;font-weight:bold;box-shadow:inset 0 2px 4px rgba(0,0,0,0.3);}
+.toggle-btn{display:none;font-size:28px;background:linear-gradient(135deg,#0b63ce,#2d66c3);border:none;cursor:pointer;color:white;padding:8px 12px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.2);}
+
+/* ====== NAVIGATION ====== */
+nav{background:linear-gradient(90deg,#3f78e0,#2d66c3,#1e4f9f);display:flex;justify-content:center;flex-wrap:wrap;padding:15px 0;box-shadow:0 4px 8px rgba(0,0,0,0.15);}
+nav a{margin:8px 25px;font-weight:600;font-size:16px;display:flex;align-items:center;gap:8px;transition:all 0.3s;padding:8px 16px;border-radius:8px;}
+nav a:hover{color:#ffdf40;transform:translateY(-3px);background:rgba(255,255,255,0.1);box-shadow:0 4px 8px rgba(0,0,0,0.2);}
+nav a.active-page{color:#ffdf40;background:rgba(255,255,255,0.15);}
+
+@media(max-width:768px){
+  nav{display:none;flex-direction:column;text-align:center;}
+  nav.show{display:flex;animation:slideDown 0.3s ease-out;}
+  .toggle-btn{display:block;position:absolute;top:20px;left:20px;}
+  .header-center h1{font-size:22px;}
+  .header-center p{font-size:12px;}
+  .header-left img{width:60px;height:60px;}
+  .header-right img{width:50px;height:50px;}
+  .lang-toggle{top:90px;}
+}
+
+/* ====== PAGE STYLES ====== */
+.container{max-width:800px;margin:40px auto;padding:0 20px;}
+.card{background:#fff;border-radius:18px;box-shadow:0 8px 30px rgba(11,99,206,.15);padding:40px;animation:fadeUp .5s ease-out;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+h2{color:#0b63ce;font-size:26px;margin-bottom:8px;}
+.sub{color:#888;font-size:14px;margin-bottom:30px;}
+.form-group{margin-bottom:20px;position:relative;}
+label{display:block;font-weight:600;color:#333;margin-bottom:7px;font-size:14px;}
+input{width:100%;padding:13px 16px;border:2px solid #e0e8f5;border-radius:10px;font-size:15px;transition:all .3s;outline:none;}
+input:focus{border-color:#0b63ce;box-shadow:0 0 0 3px rgba(11,99,206,.12);}
+.autocomplete-list{position:absolute;background:#fff;border:2px solid #0b63ce;border-radius:10px;z-index:100;width:100%;max-height:200px;overflow-y:auto;box-shadow:0 8px 20px rgba(0,0,0,.15);top:100%;left:0;}
+.autocomplete-item{padding:12px 16px;cursor:pointer;font-size:14px;border-bottom:1px solid #f0f4ff;transition:background .2s;}
+.autocomplete-item:hover{background:#e8f0fe;color:#0b63ce;}
+.autocomplete-item:last-child{border-bottom:none;}
+.product-info{background:linear-gradient(135deg,#e8f0fe,#dce8fb);border:2px solid #0b63ce;border-radius:12px;padding:18px;margin-bottom:22px;display:none;}
+.product-info.show{display:block;}
+.product-info h4{color:#0b63ce;font-size:16px;margin-bottom:10px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.info-item{font-size:14px;color:#555;}
+.info-item strong{color:#333;}
+.sell-price-note{font-size:12px;color:#888;margin-top:5px;font-style:italic;}
+.price-check{padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-top:8px;display:none;}
+.price-ok{background:#e6f9f1;color:#0a7c4e;display:block;}
+.price-warn{background:#fff3cd;color:#856404;display:block;}
+.price-err{background:#ffe8e8;color:#d41f2d;display:block;}
+.btn-submit{width:100%;background:linear-gradient(135deg,#00b09b,#0a7c4e);color:#fff;border:none;padding:15px;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;transition:all .3s;box-shadow:0 4px 14px rgba(0,128,100,.4);}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,128,100,.5);}
+.recent-sales{margin-top:40px;}
+.recent-sales h3{color:#0b63ce;font-size:20px;margin-bottom:15px;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.08);}
+th{background:linear-gradient(90deg,#0b63ce,#2d66c3);color:#fff;padding:12px 14px;text-align:left;font-size:13px;}
+td{padding:11px 14px;border-bottom:1px solid #f0f4ff;font-size:13px;color:#333;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f4f8ff;}
+.toast{position:fixed;top:90px;right:20px;padding:14px 24px;border-radius:12px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:9999;opacity:0;transform:translateX(120%);transition:all .4s;}
+.toast.show{opacity:1;transform:translateX(0);}
+.toast.success{background:linear-gradient(135deg,#00b09b,#1a7a5e);color:#fff;}
+.toast.error{background:linear-gradient(135deg,#d41f2d,#ff4444);color:#fff;}
+footer{background:linear-gradient(135deg,#1e4f9f,#0b63ce);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:20px 30px;margin-top:60px;}
+footer .small{font-size:12px;opacity:.9;}
+.scroll-top{position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,#d41f2d,#ff4444);color:white;width:50px;height:50px;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;font-size:24px;box-shadow:0 4px 12px rgba(212,31,45,0.5);transition:all .3s;z-index:1000;}
+.scroll-top:hover{transform:translateY(-5px);}
+.scroll-top.show{display:flex;}
+</style>
+</head>
+<body>
+
+<!-- ====== HEADER (same as index.html) ====== -->
+<header>
+  <button class="toggle-btn" id="menuToggle">☰</button>
+  <div class="header-left">
+    <img src="logo.png" alt="Company Logo">
+  </div>
+  <div class="header-center">
+    <h1>Go Technology Solution Company</h1>
+    <p>P.O.Box 22 - Ruvuma, Songea | Mob: +255 673 222 342 / +255 658 123 769<br>Email: gotechnology220@gmail.com</p>
+    <div class="small"><i>We take the future to you</i></div>
+  </div>
+  <div class="header-right">
+    <img src="dp.png" alt="Developer Photo">
+  </div>
+  <div class="lang-toggle">
+    <button id="enBtn" class="active">English</button>
+    <button id="swBtn">Swahili</button>
+  </div>
+</header>
+
+<!-- ====== NAVIGATION ====== -->
+<nav id="navbar">
+  <a href="index.html">🏠 Home</a>
+  <a href="register_product.html">📦 Register Product</a>
+  <a href="inventory.html">🗃️ Inventory</a>
+  <a href="sell_product.html" class="active-page">🛒 Sell Product</a>
+  <a href="daily_report.html">📊 Reports</a>
+</nav>
+
+<div class="container">
+  <div class="card">
+    <h2>🛒 Sell Product</h2>
+    <p class="sub">Record a sale — stock will be automatically deducted</p>
+    <div class="form-group">
+      <label>Product Name * (type to search)</label>
+      <input type="text" id="sellName" placeholder="Start typing product name..." autocomplete="off" oninput="onNameInput()" />
+      <div class="autocomplete-list" id="autoList"></div>
+    </div>
+    <div class="product-info" id="productInfo">
+      <h4>📦 Product Details</h4>
+      <div class="info-grid">
+        <div class="info-item">Stock Quantity: <strong id="infoQty">-</strong></div>
+        <div class="info-item">Cost Price/Unit: <strong id="infoPrice">-</strong></div>
+        <div class="info-item">Total Stock Value: <strong id="infoTotal">-</strong></div>
+        <div class="info-item">Status: <strong id="infoStatus">-</strong></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Quantity to Sell *</label>
+      <input type="number" id="sellQty" placeholder="e.g. 3" min="1" oninput="onQtyInput()" />
+    </div>
+    <div class="form-group">
+      <label>Selling Price Per Unit (TZS) *</label>
+      <input type="number" id="sellPrice" placeholder="e.g. 950000" min="0" oninput="checkSellPrice()" />
+      <div class="sell-price-note">⚠️ Selling price must be ABOVE the stock cost price</div>
+      <div class="price-check" id="priceCheck"></div>
+    </div>
+    <div class="form-group">
+      <label>Seller / Staff Name *</label>
+      <input type="text" id="sellerName" placeholder="e.g. Yusuf Lameck" />
+    </div>
+    <div class="form-group">
+      <label>Customer Name (Optional)</label>
+      <input type="text" id="customerName" placeholder="e.g. John Doe" />
+    </div>
+    <button class="btn-submit" onclick="processSale()">✅ Confirm Sale &amp; Deduct Stock</button>
+  </div>
+
+  <div class="recent-sales">
+    <h3>🕐 Recent Sales Today</h3>
+    <table>
+      <thead>
+        <tr><th>Time</th><th>Product</th><th>Qty</th><th>Sell Price</th><th>Revenue</th><th>Seller</th></tr>
+      </thead>
+      <tbody id="salesBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="scroll-top" id="scrollTop">↑</div>
+
+<footer>
+  <div>
+    <div style="font-weight:700;font-size:15px;">Developed by: Go Technology Solution</div>
+    <div class="small">📞 0744065662 | ✉ yusuphlameck220@gmail.com</div>
+  </div>
+  <div class="small">© 2025 GoTech Solutions | All Rights Reserved</div>
+</footer>
+
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyAzJJCEJdRiA5uQMYBm3WuB9BOzIDjBg7tn_cRJMOmIkobv6U_cQeFydmpWwU0Xka7jw/exec';
+
+async function sendToSheet(payload) {
+  try {
+    await fetch(SHEET_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload) });
+    return true;
+  } catch(e) { console.warn('Sheet sync failed:', e.message); return false; }
+}
+
+let selectedProduct = null;
+function showToast(msg, type='success'){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show '+type; setTimeout(()=>t.className='toast',3500); }
+function getProducts(){ return JSON.parse(localStorage.getItem('gotech_products')||'[]'); }
+function saveProducts(p){ localStorage.setItem('gotech_products',JSON.stringify(p)); }
+function getSales(){ return JSON.parse(localStorage.getItem('gotech_sales')||'[]'); }
+function saveSales(s){ localStorage.setItem('gotech_sales',JSON.stringify(s)); }
+
+function onNameInput(){
+  const val = document.getElementById('sellName').value.trim().toLowerCase();
+  const list = document.getElementById('autoList');
+  selectedProduct = null;
+  document.getElementById('productInfo').classList.remove('show');
+  list.innerHTML='';
+  if(!val) return;
+  const products = getProducts().filter(p => p.name.toLowerCase().includes(val) && p.quantity > 0);
+  if(products.length === 0){
+    list.innerHTML='<div class="autocomplete-item" style="color:#aaa;">No matching products in stock</div>';
+  } else {
+    products.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'autocomplete-item';
+      item.textContent = p.name + ' — Stock: ' + p.quantity + ' | Price: TZS ' + Number(p.price).toLocaleString();
+      item.onclick = () => selectProduct(p);
+      list.appendChild(item);
+    });
+  }
+}
+
+function selectProduct(p){
+  selectedProduct = p;
+  document.getElementById('sellName').value = p.name;
+  document.getElementById('autoList').innerHTML = '';
+  document.getElementById('infoQty').textContent = p.quantity;
+  document.getElementById('infoPrice').textContent = 'TZS ' + Number(p.price).toLocaleString();
+  document.getElementById('infoTotal').textContent = 'TZS ' + (p.quantity*p.price).toLocaleString();
+  document.getElementById('infoStatus').textContent = p.quantity <= 5 ? 'Low Stock' : 'In Stock';
+  document.getElementById('productInfo').classList.add('show');
+  checkSellPrice();
+}
+
+function onQtyInput(){
+  if(!selectedProduct) return;
+  const qty = parseInt(document.getElementById('sellQty').value);
+  document.getElementById('sellQty').style.borderColor = qty > selectedProduct.quantity ? '#d41f2d' : '#0b63ce';
+}
+
+function checkSellPrice(){
+  if(!selectedProduct) return;
+  const sp = parseFloat(document.getElementById('sellPrice').value);
+  const cp = selectedProduct.price;
+  const el = document.getElementById('priceCheck');
+  if(!sp){ el.className='price-check'; el.textContent=''; return; }
+  if(sp > cp){
+    el.className='price-check price-ok';
+    el.textContent = 'Valid! Profit per unit: TZS ' + (sp-cp).toLocaleString();
+  } else if(sp === cp){
+    el.className='price-check price-warn';
+    el.textContent = 'Selling at cost price — no profit margin';
+  } else {
+    el.className='price-check price-err';
+    el.textContent = 'Selling below cost price (TZS ' + Number(cp).toLocaleString() + ') — NOT ALLOWED';
+  }
+}
+
+async function processSale(){
+  const name = document.getElementById('sellName').value.trim();
+  const qty = parseInt(document.getElementById('sellQty').value);
+  const sellPrice = parseFloat(document.getElementById('sellPrice').value);
+  const seller = document.getElementById('sellerName').value.trim();
+  const customer = document.getElementById('customerName').value.trim() || 'Walk-in Customer';
+  if(!selectedProduct){ showToast('Please select a valid product from the list','error'); return; }
+  if(!qty || qty < 1){ showToast('Enter a valid quantity','error'); return; }
+  if(qty > selectedProduct.quantity){ showToast('Only ' + selectedProduct.quantity + ' units available','error'); return; }
+  if(!sellPrice || sellPrice < selectedProduct.price){ showToast('Selling price must be above cost price','error'); return; }
+  if(!seller){ showToast('Please enter seller name','error'); return; }
+  const products = getProducts();
+  const idx = products.findIndex(p => p.id === selectedProduct.id);
+  if(idx >= 0) products[idx].quantity -= qty;
+  saveProducts(products);
+  const sale = { id:Date.now(), productId:selectedProduct.id, productName:selectedProduct.name, quantity:qty, costPrice:selectedProduct.price, sellPrice, revenue:qty*sellPrice, profit:qty*(sellPrice-selectedProduct.price), seller, customer, datetime:new Date().toISOString() };
+  const sales = getSales(); sales.push(sale); saveSales(sales);
+  await sendToSheet({ action:'recordSale', ...sale });
+  showToast('Sale recorded! ' + qty + 'x ' + selectedProduct.name + ' — Revenue: TZS ' + (qty*sellPrice).toLocaleString());
+  document.getElementById('sellName').value='';
+  document.getElementById('sellQty').value='';
+  document.getElementById('sellPrice').value='';
+  document.getElementById('sellerName').value='';
+  document.getElementById('customerName').value='';
+  document.getElementById('productInfo').classList.remove('show');
+  document.getElementById('priceCheck').className='price-check';
+  selectedProduct = null;
+  renderTodaySales();
+}
+
+function renderTodaySales(){
+  const today = new Date().toDateString();
+  const sales = getSales().filter(s => new Date(s.datetime).toDateString() === today);
+  const tbody = document.getElementById('salesBody');
+  tbody.innerHTML='';
+  if(sales.length === 0){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px;">No sales recorded today yet</td></tr>'; return; }
+  [...sales].reverse().forEach(s => {
+    const time = new Date(s.datetime).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    tbody.innerHTML += `<tr><td>${time}</td><td><strong>${s.productName}</strong></td><td>${s.quantity}</td><td>${Number(s.sellPrice).toLocaleString()}</td><td><strong style="color:#0a7c4e;">TZS ${Number(s.revenue).toLocaleString()}</strong></td><td>${s.seller}</td></tr>`;
+  });
+}
+
+document.addEventListener('click', e => { if(!e.target.closest('.form-group')) document.getElementById('autoList').innerHTML=''; });
+
+// ====== HEADER SCRIPTS ======
+document.getElementById('menuToggle').addEventListener('click', () => document.getElementById('navbar').classList.toggle('show'));
+document.getElementById('enBtn').addEventListener('click', function(){ this.classList.add('active'); document.getElementById('swBtn').classList.remove('active'); });
+document.getElementById('swBtn').addEventListener('click', function(){ this.classList.add('active'); document.getElementById('enBtn').classList.remove('active'); });
+const scrollTopBtn = document.getElementById('scrollTop');
+window.addEventListener('scroll', () => scrollTopBtn.classList.toggle('show', window.pageYOffset > 300));
+scrollTopBtn.addEventListener('click', () => window.scrollTo({top:0,behavior:'smooth'}));
+
+renderTodaySales();
+</script>
+</body>
+</html>

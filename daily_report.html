@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sales Reports - GoTech CRM</title>
+
+<!-- SheetJS for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- jsPDF + AutoTable for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+/* ====== RESET ====== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  color: #222;
+  min-height: 100vh;
+}
+a { text-decoration: none; color: white; }
+.small { font-size: 13px; }
+
+/* ====== HEADER (matching index.html) ====== */
+header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-bottom: 3px solid #0b63ce;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 30px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+.header-left img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(11,99,206,0.3);
+  transition: transform 0.3s;
+}
+.header-left img:hover { transform: scale(1.1) rotate(5deg); }
+
+.header-center {
+  text-align: center;
+  flex: 1;
+  padding: 0 15px;
+}
+.header-center h1 {
+  color: #d41f2d;
+  font-size: 32px;
+  font-weight: 800;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 8px;
+}
+.header-center p {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+}
+.header-center .tagline {
+  font-size: 13px;
+  font-style: italic;
+  color: #777;
+  margin-top: 4px;
+}
+
+.header-right img {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  border: 3px solid #0b63ce;
+  box-shadow: 0 4px 8px rgba(11,99,206,0.3);
+  transition: all 0.3s;
+}
+.header-right img:hover {
+  transform: scale(1.1);
+  border-color: #d41f2d;
+}
+
+/* ====== MOBILE TOGGLE BUTTON ====== */
+.toggle-btn {
+  display: none;
+  font-size: 28px;
+  background: linear-gradient(135deg, #0b63ce, #2d66c3);
+  border: none;
+  cursor: pointer;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: all 0.3s;
+}
+.toggle-btn:hover { opacity: 0.85; }
+
+/* ====== NAVIGATION ====== */
+nav {
+  background: linear-gradient(90deg, #3f78e0, #2d66c3, #1e4f9f);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 15px 0;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+nav a {
+  color: #fff;
+  margin: 8px 25px;
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+nav a:hover {
+  color: #ffdf40;
+  transform: translateY(-3px);
+  background: rgba(255,255,255,0.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+nav a.active-page {
+  color: #ffdf40;
+  background: rgba(255,255,255,0.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px) {
+  nav {
+    display: none;
+    flex-direction: column;
+    text-align: center;
+  }
+  nav.show {
+    display: flex;
+    animation: slideDown 0.3s ease-out;
+  }
+  .toggle-btn {
+    display: block;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+  }
+  .header-center h1 { font-size: 22px; }
+  .header-center p  { font-size: 12px; }
+  .header-left img  { width: 55px; height: 55px; }
+  .header-right img { width: 50px; height: 50px; }
+  header { padding: 12px 15px 12px 60px; }
+}
+
+@media (max-width: 480px) {
+  .header-right { display: none; }
+  .header-center h1 { font-size: 18px; }
+}
+
+/* ====== MAIN CONTENT AREA ====== */
+.container {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+/* ====== TOOLBAR ====== */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+  background: #fff;
+  padding: 18px 22px;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.tab-btn {
+  padding: 10px 22px;
+  border: 2px solid #0b63ce;
+  background: #fff;
+  color: #0b63ce;
+  border-radius: 25px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+.tab-btn:hover { background: #e8f0fe; }
+.tab-btn.active {
+  background: linear-gradient(135deg, #0b63ce, #2d66c3);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(11,99,206,0.3);
+}
+
+.date-input {
+  padding: 9px 14px;
+  border: 2px solid #dde8fb;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+}
+.date-input:focus { border-color: #0b63ce; }
+
+.export-group {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-excel {
+  background: linear-gradient(135deg, #1a7c3e, #28a745);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-excel:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(26,124,62,0.4); }
+
+.btn-pdf-export {
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-pdf-export:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(192,57,43,0.4); }
+
+.btn-print {
+  background: linear-gradient(135deg, #555, #333);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-print:hover { transform: translateY(-2px); }
+
+@media (max-width: 600px) {
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .export-group { margin-left: 0; justify-content: stretch; }
+  .export-group button { flex: 1; justify-content: center; }
+  .tab-btn { flex: 1; text-align: center; }
+}
+
+/* ====== PRINT AREA ====== */
+#printArea {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+  padding: 35px;
+  animation: fadeUp 0.4s ease-out;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.report-header { text-align: center; border-bottom: 3px solid #0b63ce; padding-bottom: 20px; margin-bottom: 25px; }
+.report-header h2 { font-size: 28px; color: #d41f2d; font-weight: 800; }
+.report-header h3 { font-size: 18px; color: #0b63ce; margin-top: 6px; }
+.report-header p  { font-size: 13px; color: #666; margin-top: 4px; }
+
+.report-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+.meta-box { background: #f0f6ff; border: 1px solid #c0d8f5; border-radius: 10px; padding: 15px; text-align: center; }
+.meta-box .m-val { font-size: 22px; font-weight: 800; color: #0b63ce; }
+.meta-box .m-lbl { font-size: 12px; color: #666; margin-top: 3px; }
+
+.section-title { font-size: 17px; font-weight: 800; color: #0b63ce; margin: 25px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #e0eaff; }
+
+table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+th { background: linear-gradient(90deg, #0b63ce, #2d66c3); color: #fff; padding: 11px 13px; text-align: left; font-size: 13px; }
+td { padding: 10px 13px; border-bottom: 1px solid #f0f4ff; font-size: 13px; color: #333; }
+tr:last-child td { border-bottom: none; }
+tr:nth-child(even) td { background: #f9fbff; }
+.total-row td { background: #e8f0fe; font-weight: 700; color: #0b63ce; border-top: 2px solid #0b63ce; }
+
+.profit-pos { color: #0a7c4e; font-weight: 700; }
+.profit-neg { color: #d41f2d; font-weight: 700; }
+
+.product-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+.ps-card { background: #f0f6ff; border: 1px solid #c0d8f5; border-radius: 10px; padding: 15px; }
+.ps-card h4 { color: #0b63ce; font-size: 14px; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ps-card .ps-val { font-size: 18px; font-weight: 800; color: #333; }
+.ps-card .ps-sub { font-size: 12px; color: #888; margin-top: 3px; }
+
+.no-data { text-align: center; padding: 40px; color: #aaa; font-size: 16px; }
+.report-footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0eaff; font-size: 12px; color: #888; }
+
+/* ====== FOOTER ====== */
+footer {
+  background: linear-gradient(135deg, #1e4f9f, #0b63ce);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 25px 30px;
+  margin-top: 50px;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
+}
+footer .small { font-size: 12px; opacity: 0.9; }
+
+/* ====== SCROLL TO TOP ====== */
+.scroll-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: linear-gradient(135deg, #d41f2d, #ff4444);
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(212,31,45,0.5);
+  transition: all 0.3s;
+  z-index: 1000;
+  border: none;
+}
+.scroll-top:hover { transform: translateY(-5px); box-shadow: 0 6px 20px rgba(212,31,45,0.7); }
+.scroll-top.show { display: flex; }
+
+/* ====== PRINT STYLES ====== */
+@media print {
+  body { background: #fff; }
+  nav, header, .toolbar, footer, .scroll-top { display: none !important; }
+  .container { max-width: 100%; margin: 0; padding: 5mm; }
+  #printArea { box-shadow: none; padding: 5mm; border-radius: 0; }
+  table { font-size: 11px; }
+  .report-meta { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- ====== HEADER (matching index.html) ====== -->
+<header>
+  <button class="toggle-btn" id="menuToggle">☰</button>
+  <div class="header-left">
+    <img src="logo.png" alt="Company Logo">
+  </div>
+  <div class="header-center">
+    <h1>Go Technology Solution Company</h1>
+    <p>P.O.Box 22 - Ruvuma, Songea | Mob: +255 673 222 342 / +255 658 123 769<br>Email: gotechnology220@gmail.com</p>
+    <div class="tagline"><i>We take the future to you</i></div>
+  </div>
+  <div class="header-right">
+    <img src="dp.png" alt="Developer Photo">
+  </div>
+</header>
+
+<!-- ====== NAVIGATION ====== -->
+<nav id="navbar">
+  <a href="index.html">🏠 Home</a>
+  <a href="register_product.html">📦 Register Product</a>
+  <a href="inventory.html">🗃️ Inventory</a>
+  <a href="sell_product.html">🛒 Sell Product</a>
+  <a href="daily_report.html" class="active-page">📊 Reports</a>
+</nav>
+
+<!-- ====== MAIN CONTENT ====== -->
+<div class="container">
+  <div class="toolbar">
+    <button class="tab-btn active" onclick="setReport('day',this)">📅 Daily</button>
+    <button class="tab-btn" onclick="setReport('week',this)">📆 Weekly</button>
+    <button class="tab-btn" onclick="setReport('month',this)">🗓️ Monthly</button>
+    <input type="date" id="dateFilter" class="date-input" />
+    <div class="export-group">
+      <button class="btn-excel" onclick="exportExcel()">📊 Export Excel</button>
+      <button class="btn-pdf-export" onclick="exportPDF()">📄 Export PDF</button>
+      <button class="btn-print" onclick="window.print()">🖨️ Print</button>
+    </div>
+  </div>
+
+  <div id="printArea">
+    <!-- Report content rendered here by JS -->
+  </div>
+</div>
+
+<!-- ====== FOOTER ====== -->
+<footer>
+  <div>
+    <div style="font-weight:700; font-size:16px;">Developed by: Go Technology Solution</div>
+    <div class="small">📞 0744065662 | ✉ yusuphlameck220@gmail.com</div>
+  </div>
+  <div class="small">© 2025 GoTech Solutions | All Rights Reserved</div>
+</footer>
+
+<!-- ====== SCROLL TO TOP ====== -->
+<button class="scroll-top" id="scrollTop" title="Back to top">↑</button>
+
+<script>
+// ====== MOBILE MENU TOGGLE ======
+const toggleBtn = document.getElementById('menuToggle');
+const nav = document.getElementById('navbar');
+toggleBtn.addEventListener('click', () => {
+  nav.classList.toggle('show');
+});
+
+// ====== SCROLL TO TOP ======
+const scrollTopBtn = document.getElementById('scrollTop');
+window.addEventListener('scroll', () => {
+  if (window.pageYOffset > 300) scrollTopBtn.classList.add('show');
+  else scrollTopBtn.classList.remove('show');
+});
+scrollTopBtn.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ====== REPORT LOGIC (unchanged) ======
+let currentMode = 'day';
+let currentSales = [];
+let currentLabel = '';
+
+function getSales()   { return JSON.parse(localStorage.getItem('gotech_sales')   || '[]'); }
+function getProducts(){ return JSON.parse(localStorage.getItem('gotech_products') || '[]'); }
+
+function setReport(mode, btn) {
+  currentMode = mode;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  generateReport();
+}
+
+function getDateRange() {
+  const dateVal = document.getElementById('dateFilter').value;
+  const base = dateVal ? new Date(dateVal) : new Date();
+  base.setHours(0, 0, 0, 0);
+  let start, end, label;
+
+  if (currentMode === 'day') {
+    start = new Date(base); end = new Date(base);
+    end.setHours(23, 59, 59, 999);
+    label = base.toLocaleDateString('en-GB', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+  } else if (currentMode === 'week') {
+    const day = base.getDay();
+    start = new Date(base); start.setDate(base.getDate() - (day === 0 ? 6 : day - 1));
+    end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23, 59, 59, 999);
+    label = `${start.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} – ${end.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}`;
+  } else {
+    start = new Date(base.getFullYear(), base.getMonth(), 1);
+    end   = new Date(base.getFullYear(), base.getMonth() + 1, 0, 23, 59, 59, 999);
+    label = base.toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+  }
+  return { start, end, label };
+}
+
+function generateReport() {
+  const { start, end, label } = getDateRange();
+  currentLabel = label;
+  const allSales = getSales();
+  currentSales = allSales.filter(s => {
+    const d = new Date(s.datetime);
+    return d >= start && d <= end;
+  });
+
+  const totalRevenue = currentSales.reduce((a, s) => a + s.revenue,  0);
+  const totalProfit  = currentSales.reduce((a, s) => a + s.profit,   0);
+  const totalUnits   = currentSales.reduce((a, s) => a + s.quantity, 0);
+
+  const reportTitle = { day:'Daily Sales Report', week:'Weekly Sales Report', month:'Monthly Sales Report' }[currentMode];
+  const now = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  // Group by product
+  const byProduct = {};
+  currentSales.forEach(s => {
+    if (!byProduct[s.productName]) byProduct[s.productName] = { name:s.productName, qty:0, revenue:0, profit:0 };
+    byProduct[s.productName].qty     += s.quantity;
+    byProduct[s.productName].revenue += s.revenue;
+    byProduct[s.productName].profit  += s.profit;
+  });
+
+  let productCards = '';
+  Object.values(byProduct).forEach(p => {
+    productCards += `
+      <div class="ps-card">
+        <h4 title="${p.name}">📦 ${p.name}</h4>
+        <div class="ps-val">${p.qty} units</div>
+        <div class="ps-sub">Revenue: TZS ${p.revenue.toLocaleString()}</div>
+        <div class="ps-sub" style="color:#0a7c4e;">Profit: TZS ${p.profit.toLocaleString()}</div>
+      </div>`;
+  });
+
+  let tableRows = '';
+  if (currentSales.length === 0) {
+    tableRows = '<tr><td colspan="9" class="no-data">No sales recorded for this period</td></tr>';
+  } else {
+    [...currentSales].sort((a, b) => new Date(b.datetime) - new Date(a.datetime)).forEach((s, i) => {
+      const dt   = new Date(s.datetime);
+      const date = dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      const time = dt.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      const profitClass = s.profit >= 0 ? 'profit-pos' : 'profit-neg';
+      tableRows += `
+        <tr>
+          <td>${i+1}</td><td>${date}</td><td>${time}</td>
+          <td><strong>${s.productName}</strong></td>
+          <td>${s.quantity}</td>
+          <td>TZS ${Number(s.costPrice).toLocaleString()}</td>
+          <td>TZS ${Number(s.sellPrice).toLocaleString()}</td>
+          <td><strong>TZS ${Number(s.revenue).toLocaleString()}</strong></td>
+          <td class="${profitClass}">TZS ${Number(s.profit).toLocaleString()}</td>
+        </tr>
+        <tr style="background:#fafcff;font-size:12px;color:#888;">
+          <td colspan="2"></td>
+          <td colspan="2">👤 Seller: <strong>${s.seller}</strong></td>
+          <td colspan="5">🧑 Customer: <strong>${s.customer || 'Walk-in'}</strong></td>
+        </tr>`;
+    });
+    tableRows += `
+      <tr class="total-row">
+        <td colspan="4">📊 TOTALS FOR PERIOD</td>
+        <td>${totalUnits}</td><td>—</td><td>—</td>
+        <td>TZS ${totalRevenue.toLocaleString()}</td>
+        <td class="profit-pos">TZS ${totalProfit.toLocaleString()}</td>
+      </tr>`;
+  }
+
+  document.getElementById('printArea').innerHTML = `
+    <div class="report-header">
+      <h2>🏢 Go Technology Solution Company</h2>
+      <h3>📊 ${reportTitle}</h3>
+      <p>Period: <strong>${label}</strong></p>
+      <p>Generated: ${now} | P.O.Box 22, Songea, Ruvuma</p>
+    </div>
+    <div class="report-meta">
+      <div class="meta-box"><div class="m-val">${currentSales.length}</div><div class="m-lbl">Total Transactions</div></div>
+      <div class="meta-box"><div class="m-val">TZS ${totalRevenue.toLocaleString()}</div><div class="m-lbl">Total Revenue</div></div>
+      <div class="meta-box"><div class="m-val" style="color:#0a7c4e;">TZS ${totalProfit.toLocaleString()}</div><div class="m-lbl">Total Profit</div></div>
+    </div>
+    ${Object.keys(byProduct).length > 0 ? `
+      <div class="section-title">📦 Product Performance Summary</div>
+      <div class="product-summary">${productCards}</div>` : ''}
+    <div class="section-title">📋 Detailed Sales Transactions</div>
+    <table id="salesTable">
+      <thead>
+        <tr>
+          <th>#</th><th>Date</th><th>Time</th><th>Product</th>
+          <th>Qty Sold</th><th>Cost Price</th><th>Sell Price</th>
+          <th>Revenue</th><th>Profit</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+    <div class="report-footer">
+      <strong>Go Technology Solution Company</strong><br>
+      P.O.Box 22, Songea, Ruvuma | 📞 0655485784 / 0744065662 | ✉ gotechnology220@gmail.com<br>
+      <em>This is an official sales report — ${reportTitle} | ${label}</em><br>
+      Powered by GoTech CRM System
+    </div>`;
+}
+
+// ====== EXPORT EXCEL (unchanged) ======
+function exportExcel() {
+  if (currentSales.length === 0) { alert('No sales data to export for this period.'); return; }
+  const reportTitle = { day:'Daily', week:'Weekly', month:'Monthly' }[currentMode];
+  const totalRevenue = currentSales.reduce((a,s)=>a+s.revenue,0);
+  const totalProfit  = currentSales.reduce((a,s)=>a+s.profit,0);
+  const totalUnits   = currentSales.reduce((a,s)=>a+s.quantity,0);
+
+  const summaryData = [
+    ['Go Technology Solution Company'],
+    [`${reportTitle} Sales Report — ${currentLabel}`],
+    ['Generated:', new Date().toLocaleString('en-GB')],
+    [],
+    ['Total Transactions', currentSales.length],
+    ['Total Units Sold', totalUnits],
+    ['Total Revenue (TZS)', totalRevenue],
+    ['Total Profit (TZS)', totalProfit],
+  ];
+
+  const headers = ['#','Date','Time','Product','Qty Sold','Cost Price','Sell Price','Revenue (TZS)','Profit (TZS)','Seller','Customer'];
+  const rows = [...currentSales]
+    .sort((a,b)=>new Date(b.datetime)-new Date(a.datetime))
+    .map((s,i)=>{
+      const dt = new Date(s.datetime);
+      return [i+1, dt.toLocaleDateString('en-GB'), dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+        s.productName, s.quantity, s.costPrice, s.sellPrice, s.revenue, s.profit, s.seller, s.customer||'Walk-in Customer'];
+    });
+  rows.push(['','','','TOTALS',totalUnits,'','',totalRevenue,totalProfit,'','']);
+
+  const wb = XLSX.utils.book_new();
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+  const wsData = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  wsData['!cols'] = [{wch:4},{wch:14},{wch:10},{wch:24},{wch:10},{wch:14},{wch:14},{wch:16},{wch:16},{wch:18},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, wsData, 'Transactions');
+
+  const byProduct = {};
+  currentSales.forEach(s=>{
+    if (!byProduct[s.productName]) byProduct[s.productName]={name:s.productName,qty:0,revenue:0,profit:0,transactions:0};
+    byProduct[s.productName].qty+=s.quantity; byProduct[s.productName].revenue+=s.revenue;
+    byProduct[s.productName].profit+=s.profit; byProduct[s.productName].transactions++;
+  });
+  const psHeaders = ['Product','Units Sold','Total Revenue (TZS)','Total Profit (TZS)','Transactions'];
+  const psRows = Object.values(byProduct).map(p=>[p.name,p.qty,p.revenue,p.profit,p.transactions]);
+  const wsPS = XLSX.utils.aoa_to_sheet([psHeaders,...psRows]);
+  wsPS['!cols'] = [{wch:28},{wch:12},{wch:20},{wch:20},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsPS, 'Product Summary');
+
+  XLSX.writeFile(wb, `GoTech_${reportTitle}_Report_${currentLabel.replace(/[^a-zA-Z0-9]/g,'_')}.xlsx`);
+}
+
+// ====== EXPORT PDF (unchanged) ======
+function exportPDF() {
+  if (currentSales.length === 0) { alert('No sales data to export for this period.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  const reportTitle = { day:'Daily', week:'Weekly', month:'Monthly' }[currentMode];
+  const totalRevenue = currentSales.reduce((a,s)=>a+s.revenue,0);
+  const totalProfit  = currentSales.reduce((a,s)=>a+s.profit,0);
+  const totalUnits   = currentSales.reduce((a,s)=>a+s.quantity,0);
+  const now = new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  doc.setFillColor(11,99,206); doc.rect(0,0,297,22,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('Go Technology Solution Company',148,9,{align:'center'});
+  doc.setFontSize(11); doc.setFont('helvetica','normal');
+  doc.text(`${reportTitle} Sales Report | ${currentLabel}`,148,16,{align:'center'});
+  doc.setTextColor(100,100,100); doc.setFontSize(9);
+  doc.text(`Generated: ${now} | P.O.Box 22, Songea, Ruvuma`,148,27,{align:'center'});
+
+  const boxes = [
+    {label:'Transactions',  value:String(currentSales.length)},
+    {label:'Units Sold',    value:String(totalUnits)},
+    {label:'Total Revenue', value:`TZS ${totalRevenue.toLocaleString()}`},
+    {label:'Total Profit',  value:`TZS ${totalProfit.toLocaleString()}`},
+  ];
+  const bw=60,bh=16,bx0=14,by=31;
+  boxes.forEach((b,i)=>{
+    const x=bx0+i*(bw+4);
+    doc.setFillColor(240,246,255); doc.setDrawColor(192,216,245);
+    doc.roundedRect(x,by,bw,bh,3,3,'FD');
+    doc.setTextColor(11,99,206); doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text(b.value,x+bw/2,by+9,{align:'center'});
+    doc.setTextColor(120,120,120); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(b.label,x+bw/2,by+14,{align:'center'});
+  });
+
+  const headers = [['#','Date','Time','Product','Qty','Cost Price','Sell Price','Revenue (TZS)','Profit (TZS)','Seller']];
+  const rows = [...currentSales].sort((a,b)=>new Date(b.datetime)-new Date(a.datetime)).map((s,i)=>{
+    const dt=new Date(s.datetime);
+    return [i+1, dt.toLocaleDateString('en-GB'), dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+      s.productName.length>20?s.productName.substring(0,18)+'…':s.productName,
+      s.quantity, Number(s.costPrice).toLocaleString(), Number(s.sellPrice).toLocaleString(),
+      Number(s.revenue).toLocaleString(), Number(s.profit).toLocaleString(), s.seller];
+  });
+  rows.push(['','','','TOTALS',totalUnits,'','',totalRevenue.toLocaleString(),totalProfit.toLocaleString(),'']);
+
+  doc.autoTable({
+    head: headers, body: rows, startY: 52,
+    styles: { fontSize:8, cellPadding:2.5, overflow:'linebreak' },
+    headStyles: { fillColor:[11,99,206], textColor:255, fontStyle:'bold', halign:'center' },
+    alternateRowStyles: { fillColor:[249,251,255] },
+    columnStyles: {
+      0:{cellWidth:8,halign:'center'}, 1:{cellWidth:22}, 2:{cellWidth:16}, 3:{cellWidth:40},
+      4:{cellWidth:12,halign:'center'}, 5:{cellWidth:26,halign:'right'}, 6:{cellWidth:26,halign:'right'},
+      7:{cellWidth:30,halign:'right',fontStyle:'bold'}, 8:{cellWidth:28,halign:'right'}, 9:{cellWidth:30}
+    },
+  });
+
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i=1;i<=pageCount;i++) {
+    doc.setPage(i);
+    const pageH = doc.internal.pageSize.getHeight();
+    doc.setFillColor(30,79,159); doc.rect(0,pageH-10,297,10,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(`Go Technology Solution | 0655485784 / 0744065662 | gotechnology220@gmail.com`,14,pageH-4);
+    doc.text(`Page ${i} of ${pageCount}`,283,pageH-4,{align:'right'});
+  }
+  doc.save(`GoTech_${reportTitle}_Report_${currentLabel.replace(/[^a-zA-Z0-9]/g,'_')}.pdf`);
+}
+
+// ====== INIT ======
+const today = new Date();
+const yyyy = today.getFullYear();
+const mm = String(today.getMonth()+1).padStart(2,'0');
+const dd = String(today.getDate()).padStart(2,'0');
+document.getElementById('dateFilter').value = `${yyyy}-${mm}-${dd}`;
+document.getElementById('dateFilter').addEventListener('change', generateReport);
+generateReport();
+</script>
+</body>
+</html>
