@@ -62,6 +62,13 @@ nav a.active-page{color:#ffdf40;background:rgba(255,255,255,0.15);}
 .btn-sync{background:linear-gradient(135deg,#0b63ce,#2d66c3);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px;transition:all .3s;display:flex;align-items:center;gap:6px;}
 .btn-sync:hover{transform:translateY(-2px);}
 .btn-sync:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+/* Action buttons in table */
+.btn-edit{background:linear-gradient(135deg,#f5a623,#e8940f);color:#fff;border:none;padding:5px 12px;border-radius:7px;font-weight:600;cursor:pointer;font-size:12px;transition:all .3s;}
+.btn-edit:hover{transform:translateY(-1px);opacity:.9;}
+.btn-delete{background:linear-gradient(135deg,#d41f2d,#ff4444);color:#fff;border:none;padding:5px 12px;border-radius:7px;font-weight:600;cursor:pointer;font-size:12px;transition:all .3s;}
+.btn-delete:hover{transform:translateY(-1px);opacity:.9;}
+
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 6px 22px rgba(0,0,0,.1);}
 th{background:linear-gradient(90deg,#0b63ce,#2d66c3);color:#fff;padding:14px 16px;text-align:left;font-size:14px;}
 td{padding:13px 16px;border-bottom:1px solid #f0f4ff;font-size:14px;color:#333;}
@@ -85,6 +92,19 @@ tr:hover td{background:#f4f8ff;}
 .sync-bar.loading .sync-dot{background:#0b63ce;animation:pulse 1s infinite;}
 .sync-bar.error .sync-dot{background:#d41f2d;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* ====== MODAL ====== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:420px;box-shadow:0 12px 40px rgba(0,0,0,.2);animation:fadeUp .3s ease-out;}
+.modal h3{font-size:20px;color:#0b63ce;margin-bottom:20px;font-weight:800;}
+.modal label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:4px;margin-top:14px;}
+.modal input{width:100%;padding:10px 14px;border:2px solid #dde8fb;border-radius:8px;font-size:14px;outline:none;transition:border-color .3s;}
+.modal input:focus{border-color:#0b63ce;}
+.modal-actions{display:flex;gap:10px;margin-top:22px;justify-content:flex-end;}
+.btn-cancel{background:#f0f4ff;color:#0b63ce;border:none;padding:10px 20px;border-radius:9px;font-weight:700;cursor:pointer;font-size:14px;}
+.btn-save{background:linear-gradient(135deg,#0b63ce,#2d66c3);color:#fff;border:none;padding:10px 22px;border-radius:9px;font-weight:700;cursor:pointer;font-size:14px;}
+
 footer{background:linear-gradient(135deg,#1e4f9f,#0b63ce);color:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:20px 30px;margin-top:60px;}
 footer .small{font-size:12px;opacity:.9;}
 .scroll-top{position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,#d41f2d,#ff4444);color:white;width:50px;height:50px;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;font-size:24px;box-shadow:0 4px 12px rgba(212,31,45,0.5);transition:all .3s;z-index:1000;}
@@ -92,16 +112,17 @@ footer .small{font-size:12px;opacity:.9;}
 .scroll-top.show{display:flex;}
 
 @media print{
-  nav,header,.toolbar,.btn-print,.btn-sync,.sync-bar,footer,.scroll-top{display:none!important;}
+  nav,header,.toolbar,.btn-print,.btn-sync,.sync-bar,footer,.scroll-top,.modal-overlay{display:none!important;}
   body{background:#fff;}
   .container{max-width:100%;margin:0;padding:10px;}
   .sum-card{box-shadow:none;border:1px solid #ddd;}
+  .btn-edit,.btn-delete{display:none!important;}
 }
 </style>
 </head>
 <body>
 
-<!-- ====== HEADER (same as index.html) ====== -->
+<!-- ====== HEADER ====== -->
 <header>
   <button class="toggle-btn" id="menuToggle">☰</button>
   <div class="header-left">
@@ -131,8 +152,8 @@ footer .small{font-size:12px;opacity:.9;}
 </nav>
 
 <div class="container">
-  <div class="page-title">🗃️ Inventory Management</div>
-  <div class="page-sub">Full overview of all products, quantities, and total stock value</div>
+  <div class="page-title" data-en="🗃️ Inventory Management" data-sw="🗃️ Usimamizi wa Hesabu za Bidhaa">🗃️ Inventory Management</div>
+  <div class="page-sub" data-en="Full overview of all products, quantities, and total stock value" data-sw="Muhtasari kamili wa bidhaa zote, idadi na thamani ya jumla">Full overview of all products, quantities, and total stock value</div>
 
   <div class="sync-bar loading" id="syncBar">
     <span class="sync-dot"></span>
@@ -140,10 +161,27 @@ footer .small{font-size:12px;opacity:.9;}
   </div>
 
   <div class="summary-cards">
-    <div class="sum-card"><div class="icon">📦</div><div class="val" id="totalProducts">0</div><div class="lbl">Total Products</div></div>
-    <div class="sum-card"><div class="icon">🔢</div><div class="val" id="totalUnits">0</div><div class="lbl">Total Units in Stock</div></div>
-    <div class="sum-card"><div class="icon">💰</div><div class="val" id="totalValue">0</div><div class="lbl">Overall Stock Value (TZS)</div></div>
-    <div class="sum-card"><div class="icon">⚠️</div><div class="val" id="lowStock">0</div><div class="lbl">Low Stock Alerts</div></div>
+    <div class="sum-card">
+      <div class="icon">📦</div>
+      <div class="val" id="totalProducts">0</div>
+      <!-- BUG FIX 1: label now reflects ALL products, not filtered -->
+      <div class="lbl" data-en="Total Products" data-sw="Jumla ya Bidhaa">Total Products</div>
+    </div>
+    <div class="sum-card">
+      <div class="icon">🔢</div>
+      <div class="val" id="totalUnits">0</div>
+      <div class="lbl" data-en="Total Units in Stock" data-sw="Jumla ya Vipande Stokini">Total Units in Stock</div>
+    </div>
+    <div class="sum-card">
+      <div class="icon">💰</div>
+      <div class="val" id="totalValue">0</div>
+      <div class="lbl" data-en="Overall Stock Value (TZS)" data-sw="Thamani ya Jumla (TZS)">Overall Stock Value (TZS)</div>
+    </div>
+    <div class="sum-card">
+      <div class="icon">⚠️</div>
+      <div class="val" id="lowStock">0</div>
+      <div class="lbl" data-en="Low Stock Alerts" data-sw="Tahadhari za Stoki Ndogo">Low Stock Alerts</div>
+    </div>
   </div>
 
   <div class="toolbar">
@@ -157,14 +195,37 @@ footer .small{font-size:12px;opacity:.9;}
   <table id="invTable">
     <thead>
       <tr>
-        <th>#</th><th>Product Name</th><th>Quantity in Stock</th>
-        <th>Price Per Unit (TZS)</th><th>Total Value (TZS)</th>
-        <th>Status</th><th>Date Added</th>
+        <th>#</th>
+        <th data-en="Product Name" data-sw="Jina la Bidhaa">Product Name</th>
+        <th data-en="Quantity in Stock" data-sw="Idadi Stokini">Quantity in Stock</th>
+        <th data-en="Price Per Unit (TZS)" data-sw="Bei kwa Kipande (TZS)">Price Per Unit (TZS)</th>
+        <th data-en="Total Value (TZS)" data-sw="Thamani Yote (TZS)">Total Value (TZS)</th>
+        <th data-en="Status" data-sw="Hali">Status</th>
+        <th data-en="Date Added" data-sw="Tarehe Iliyosajiliwa">Date Added</th>
+        <th data-en="Actions" data-sw="Vitendo">Actions</th>
       </tr>
     </thead>
     <tbody id="invBody"></tbody>
     <tfoot id="invFoot"></tfoot>
   </table>
+</div>
+
+<!-- ====== EDIT MODAL ====== -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>✏️ Edit Product</h3>
+    <input type="hidden" id="editId"/>
+    <label>Product Name</label>
+    <input type="text" id="editName" placeholder="Product name"/>
+    <label>Quantity</label>
+    <input type="number" id="editQty" placeholder="Quantity" min="0"/>
+    <label>Price (TZS)</label>
+    <input type="number" id="editPrice" placeholder="Price" min="0"/>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEdit()">💾 Save Changes</button>
+    </div>
+  </div>
 </div>
 
 <div class="scroll-top" id="scrollTop">↑</div>
@@ -179,94 +240,294 @@ footer .small{font-size:12px;opacity:.9;}
 
 <script>
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyAzJJCEJdRiA5uQMYBm3WuB9BOzIDjBg7tn_cRJMOmIkobv6U_cQeFydmpWwU0Xka7jw/exec';
-let allProducts = [];
 
-function setSyncBar(state, msg){ const bar=document.getElementById('syncBar'); bar.className='sync-bar '+state; document.getElementById('syncMsg').textContent=msg; }
-function getLocalProducts(){ return JSON.parse(localStorage.getItem('gotech_products')||'[]'); }
-function saveLocalProducts(p){ localStorage.setItem('gotech_products',JSON.stringify(p)); }
+// ── State ────────────────────────────────────────────────────
+let allProducts = [];  // always holds the FULL unfiltered list
 
-async function loadFromSheet(){
+// ── Sync bar helper ──────────────────────────────────────────
+function setSyncBar(state, msg) {
+  const bar = document.getElementById('syncBar');
+  bar.className = 'sync-bar ' + state;
+  document.getElementById('syncMsg').textContent = msg;
+}
+
+// ── LocalStorage helpers ─────────────────────────────────────
+function getLocalProducts() {
+  try { return JSON.parse(localStorage.getItem('gotech_products') || '[]'); }
+  catch(e) { return []; }
+}
+function saveLocalProducts(p) {
+  localStorage.setItem('gotech_products', JSON.stringify(p));
+}
+
+// ── Normalise a raw sheet row → clean product object ─────────
+// FIX: trim all keys so trailing spaces / underscores never cause mismatches
+function normaliseRow(row) {
+  // Build a clean copy with trimmed, lowercased keys
+  const clean = {};
+  Object.keys(row).forEach(k => { clean[k.toLowerCase().trim()] = row[k]; });
+
+  const price =
+    Number(clean['price_tzs_']) ||
+    Number(clean['price_tzs'])  ||
+    Number(clean['price'])      || 0;
+
+  return {
+    id:           String(clean['id'] || '').trim(),
+    name:         String(clean['name'] || '').trim(),
+    quantity:     Number(clean['quantity']) || 0,
+    price:        price,
+    registeredAt: clean['registered_at'] || clean['registeredat'] || '',
+    updatedAt:    clean['updated_at']    || clean['updatedat']    || ''
+  };
+}
+
+// ── Fetch from Google Sheets ─────────────────────────────────
+async function loadFromSheet() {
   const btn = document.getElementById('syncBtn');
-  btn.disabled=true; btn.textContent='⏳ Syncing...';
-  setSyncBar('loading','Fetching latest data from Google Sheets...');
+  btn.disabled = true;
+  btn.textContent = '⏳ Syncing...';
+  setSyncBar('loading', 'Fetching latest data from Google Sheets...');
+
   try {
-    const res = await fetch(SHEET_URL + '?action=getProducts', { method:'GET' });
+    const res  = await fetch(SHEET_URL + '?action=getProducts', { method: 'GET' });
     const json = await res.json();
-    if(json.success && Array.isArray(json.data) && json.data.length > 0){
-      const mapped = json.data.map(row => ({
-        id: row['id'] || Date.now(),
-        name: row['name'] || '',
-        quantity: Number(row['quantity']) || 0,
-        price: Number(row['price_tzs_']) || Number(row['price']) || 0,
-        registeredAt: row['registered_at'] || row['registeredat'] || '',
-        updatedAt: row['updated_at'] || row['updatedat'] || ''
-      })).filter(p => p.name);
+
+    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+      // FIX: use normaliseRow so key mismatches never silently return 0
+      const mapped = json.data.map(normaliseRow).filter(p => p.name);
       allProducts = mapped;
       saveLocalProducts(mapped);
-      setSyncBar('synced','✅ Synced from Google Sheets — ' + mapped.length + ' products loaded (' + new Date().toLocaleTimeString('en-GB') + ')');
+      setSyncBar('synced',
+        '✅ Synced from Google Sheets — ' + mapped.length +
+        ' products loaded (' + new Date().toLocaleTimeString('en-GB') + ')');
     } else {
       allProducts = getLocalProducts();
-      setSyncBar('local','⚠️ Sheet returned no data — showing local cache (' + allProducts.length + ' products)');
+      setSyncBar('local',
+        '⚠️ Sheet returned no data — showing local cache (' + allProducts.length + ' products)');
     }
-  } catch(err){
+  } catch (err) {
     allProducts = getLocalProducts();
-    setSyncBar('error','❌ Could not reach Google Sheets — showing local data. ' + err.message);
+    setSyncBar('error',
+      '❌ Could not reach Google Sheets — showing local data. ' + err.message);
   }
+
+  // FIX: always update summary with the FULL allProducts list
+  updateSummary(allProducts);
   renderInventory(allProducts);
-  btn.disabled=false; btn.textContent='🔄 Sync from Sheet';
+
+  btn.disabled = false;
+  btn.textContent = '🔄 Sync from Sheet';
 }
 
-function getStatusBadge(qty){
-  if(qty===0) return '<span class="badge-qty badge-out"><span class="status-dot dot-out"></span>Out of Stock</span>';
-  if(qty<=5) return '<span class="badge-qty badge-low"><span class="status-dot dot-low"></span>Low Stock</span>';
+// ── Status badge ─────────────────────────────────────────────
+function getStatusBadge(qty) {
+  if (qty === 0)  return '<span class="badge-qty badge-out"><span class="status-dot dot-out"></span>Out of Stock</span>';
+  if (qty <= 5)   return '<span class="badge-qty badge-low"><span class="status-dot dot-low"></span>Low Stock</span>';
   return '<span class="badge-qty badge-ok"><span class="status-dot dot-ok"></span>In Stock</span>';
 }
-function formatDate(iso){ if(!iso) return '-'; const d=new Date(iso); return isNaN(d)?iso:d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
 
-function renderInventory(products){
-  const tbody=document.getElementById('invBody'); const tfoot=document.getElementById('invFoot');
-  tbody.innerHTML='';
-  if(products.length===0){
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:25px;">No products found. <a href="register_product.html" style="color:#0b63ce;">Register a product</a> first.</td></tr>';
-    tfoot.innerHTML=''; updateSummary([]); return;
+function formatDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return isNaN(d) ? iso : d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+// ── Render table rows ─────────────────────────────────────────
+// FIX: renderInventory only controls the TABLE rows.
+//      Summary cards are always driven by the full allProducts array (updateSummary).
+function renderInventory(products) {
+  const tbody = document.getElementById('invBody');
+  const tfoot = document.getElementById('invFoot');
+  tbody.innerHTML = '';
+
+  if (products.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#aaa;padding:25px;">
+      No products found. <a href="register_product.html" style="color:#0b63ce;">Register a product</a> first.</td></tr>`;
+    tfoot.innerHTML = '';
+    return;  // FIX: removed the buggy updateSummary([]) call that zeroed the cards
   }
-  let grandTotal=0, grandQty=0;
-  products.forEach((p,i) => {
-    const total = p.quantity*p.price; grandTotal+=total; grandQty+=p.quantity;
+
+  let grandTotal = 0, grandQty = 0;
+  products.forEach((p, i) => {
+    const total = p.quantity * p.price;
+    grandTotal += total;
+    grandQty   += p.quantity;
+
     tbody.innerHTML += `<tr>
-      <td>${i+1}</td>
-      <td><strong>${p.name}</strong></td>
-      <td style="font-weight:700;font-size:16px;">${p.quantity}</td>
-      <td>${Number(p.price).toLocaleString()}</td>
+      <td>${i + 1}</td>
+      <td><strong>${escapeHtml(p.name)}</strong></td>
+      <td style="font-weight:700;font-size:16px;">${p.quantity.toLocaleString()}</td>
+      <td>${p.price.toLocaleString()}</td>
       <td><strong>${total.toLocaleString()}</strong></td>
       <td>${getStatusBadge(p.quantity)}</td>
       <td>${formatDate(p.registeredAt)}</td>
+      <td>
+        <button class="btn-edit"   onclick="openEditModal('${escapeHtml(p.id)}')">✏️ Edit</button>
+        <button class="btn-delete" onclick="confirmDelete('${escapeHtml(p.id)}','${escapeHtml(p.name)}')">🗑️ Delete</button>
+      </td>
     </tr>`;
   });
-  tfoot.innerHTML = `<tr class="total-row"><td colspan="2">📊 GRAND TOTAL</td><td>${grandQty.toLocaleString()}</td><td>—</td><td>TZS ${grandTotal.toLocaleString()}</td><td colspan="2"></td></tr>`;
-  updateSummary(allProducts);
+
+  // Totals footer — only covers the visible filtered rows
+  tfoot.innerHTML = `<tr class="total-row">
+    <td colspan="2">📊 GRAND TOTAL</td>
+    <td>${grandQty.toLocaleString()}</td>
+    <td>—</td>
+    <td>TZS ${grandTotal.toLocaleString()}</td>
+    <td colspan="3"></td>
+  </tr>`;
 }
 
-function updateSummary(products){
-  document.getElementById('totalProducts').textContent = products.length;
-  document.getElementById('totalUnits').textContent = products.reduce((a,p)=>a+p.quantity,0).toLocaleString();
-  document.getElementById('totalValue').textContent = 'TZS ' + products.reduce((a,p)=>a+(p.quantity*p.price),0).toLocaleString();
-  document.getElementById('lowStock').textContent = products.filter(p=>p.quantity>0&&p.quantity<=5).length;
+// ── Summary cards — ALWAYS uses the full allProducts list ─────
+function updateSummary(products) {
+  // FIX: summary is always the full product list — never a filtered subset
+  document.getElementById('totalProducts').textContent =
+    products.length.toLocaleString();
+
+  document.getElementById('totalUnits').textContent =
+    products.reduce((a, p) => a + p.quantity, 0).toLocaleString();
+
+  document.getElementById('totalValue').textContent =
+    'TZS ' + products.reduce((a, p) => a + (p.quantity * p.price), 0).toLocaleString();
+
+  document.getElementById('lowStock').textContent =
+    products.filter(p => p.quantity > 0 && p.quantity <= 5).length;
 }
 
-function filterTable(){ const q=document.getElementById('searchBox').value.toLowerCase(); renderInventory(allProducts.filter(p=>p.name.toLowerCase().includes(q))); }
+// ── Search / filter (table only — summary cards unchanged) ────
+function filterTable() {
+  const q = document.getElementById('searchBox').value.toLowerCase().trim();
+  const filtered = q ? allProducts.filter(p => p.name.toLowerCase().includes(q)) : allProducts;
+  renderInventory(filtered);
+  // FIX: summary cards are NOT re-calculated during filter — they always show totals
+}
 
-// ====== HEADER SCRIPTS ======
-document.getElementById('menuToggle').addEventListener('click', () => document.getElementById('navbar').classList.toggle('show'));
-document.getElementById('enBtn').addEventListener('click', function(){ this.classList.add('active'); document.getElementById('swBtn').classList.remove('active'); });
-document.getElementById('swBtn').addEventListener('click', function(){ this.classList.add('active'); document.getElementById('enBtn').classList.remove('active'); });
+// ── XSS safety ───────────────────────────────────────────────
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Edit modal ───────────────────────────────────────────────
+function openEditModal(id) {
+  const p = allProducts.find(x => String(x.id) === String(id));
+  if (!p) return alert('Product not found.');
+  document.getElementById('editId').value    = p.id;
+  document.getElementById('editName').value  = p.name;
+  document.getElementById('editQty').value   = p.quantity;
+  document.getElementById('editPrice').value = p.price;
+  document.getElementById('editModal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('editModal').classList.remove('show');
+}
+
+async function saveEdit() {
+  const id    = document.getElementById('editId').value;
+  const name  = document.getElementById('editName').value.trim();
+  const qty   = Number(document.getElementById('editQty').value);
+  const price = Number(document.getElementById('editPrice').value);
+
+  if (!name)         return alert('Product name is required.');
+  if (isNaN(qty)  || qty  < 0) return alert('Enter a valid quantity.');
+  if (isNaN(price)|| price < 0) return alert('Enter a valid price.');
+
+  const btn = document.querySelector('.btn-save');
+  btn.disabled = true; btn.textContent = '⏳ Saving...';
+
+  try {
+    const res  = await fetch(SHEET_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action:'editProduct', id, name, quantity:qty, price })
+    });
+    const json = await res.json();
+    if (json.success) {
+      // Update locally without a full re-sync
+      const idx = allProducts.findIndex(x => String(x.id) === String(id));
+      if (idx !== -1) {
+        allProducts[idx] = { ...allProducts[idx], name, quantity:qty, price };
+        saveLocalProducts(allProducts);
+      }
+      closeModal();
+      updateSummary(allProducts);
+      renderInventory(allProducts);
+      setSyncBar('synced', '✅ Product updated successfully.');
+    } else {
+      alert('Error: ' + (json.error || 'Could not update product.'));
+    }
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  }
+
+  btn.disabled = false; btn.textContent = '💾 Save Changes';
+}
+
+// ── Delete ───────────────────────────────────────────────────
+async function confirmDelete(id, name) {
+  if (!confirm(`Delete "${name}"?\nThis cannot be undone.`)) return;
+
+  setSyncBar('loading', 'Deleting product...');
+  try {
+    const res  = await fetch(SHEET_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action:'deleteProduct', id })
+    });
+    const json = await res.json();
+    if (json.success) {
+      allProducts = allProducts.filter(p => String(p.id) !== String(id));
+      saveLocalProducts(allProducts);
+      updateSummary(allProducts);
+      renderInventory(allProducts);
+      setSyncBar('synced', '✅ Product deleted successfully.');
+    } else {
+      setSyncBar('error', '❌ ' + (json.error || 'Could not delete product.'));
+    }
+  } catch (err) {
+    setSyncBar('error', '❌ Network error: ' + err.message);
+  }
+}
+
+// ── Language toggle (Swahili / English) ──────────────────────
+let currentLang = 'en';
+function applyLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('[data-en]').forEach(el => {
+    el.textContent = lang === 'sw' ? el.dataset.sw : el.dataset.en;
+  });
+  document.getElementById('enBtn').classList.toggle('active', lang === 'en');
+  document.getElementById('swBtn').classList.toggle('active', lang === 'sw');
+  document.getElementById('searchBox').placeholder =
+    lang === 'sw' ? '🔍 Tafuta bidhaa...' : '🔍 Search product...';
+}
+
+document.getElementById('enBtn').addEventListener('click', () => applyLang('en'));
+document.getElementById('swBtn').addEventListener('click', () => applyLang('sw'));
+
+// ── Header / nav helpers ──────────────────────────────────────
+document.getElementById('menuToggle').addEventListener('click', () => {
+  document.getElementById('navbar').classList.toggle('show');
+});
+
 const scrollTopBtn = document.getElementById('scrollTop');
 window.addEventListener('scroll', () => scrollTopBtn.classList.toggle('show', window.pageYOffset > 300));
-scrollTopBtn.addEventListener('click', () => window.scrollTo({top:0,behavior:'smooth'}));
+scrollTopBtn.addEventListener('click', () => window.scrollTo({ top:0, behavior:'smooth' }));
 
-// ====== INIT ======
+// Close modal when clicking outside it
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── Init ─────────────────────────────────────────────────────
 allProducts = getLocalProducts();
-if(allProducts.length > 0){ renderInventory(allProducts); setSyncBar('local','📦 Showing local cache (' + allProducts.length + ' products) — syncing from sheet...'); }
+if (allProducts.length > 0) {
+  // FIX: show summary immediately from cache — not zeros
+  updateSummary(allProducts);
+  renderInventory(allProducts);
+  setSyncBar('local',
+    '📦 Showing local cache (' + allProducts.length + ' products) — syncing from sheet...');
+}
 loadFromSheet();
 </script>
 </body>
